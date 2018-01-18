@@ -48,8 +48,7 @@ size_t _xmit(uint16_t n) {
     unsigned long m = n;
     n /= 10;
     char c = m - 10 * n;
-    *--str = c < 10 ? c + '0'
-                    : c + 'A' - 10;  // predecrement to move left one sig fig
+    *--str = c + '0'	//predecrement to move left in string
   } while (n);
 
   return _xmit(str);
