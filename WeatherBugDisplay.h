@@ -13,8 +13,7 @@
 #include <SoftwareSerial.h>
 #include <Time.h>
 
-class WeatherBugDisplay
-{
+class WeatherBugDisplay{
   public:
   WeatherBugDisplay(SoftwareSerial *ser);
   WeatherBugDisplay(HardwareSerial *ser);
@@ -55,5 +54,9 @@ class WeatherBugDisplay
   uint16_t _avgwindvel;
   uint16_t _avgwinddir;
   uint16_t _barorate;
+  
+}
+
+
 	
 #endif
