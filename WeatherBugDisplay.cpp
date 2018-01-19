@@ -30,60 +30,11 @@ uint16_t _avgwindvel = 0;
 uint16_t _avgwinddir = 0;
 uint16_t _barorate = 65000;
 
-size_t _xmit(const char str[]) {
-  return _swSerial ? _swSerial->write(str) : _hwSerial->write(str);
-}
 
-size_t _xmit(char c) {
-  return _swSerial ? _swSerial->write(c) : _hwSerial->write(c);
-}
-
-size_t _xmit(uint16_t n) {
-  char buf[8 * sizeof(long) + 1];  // Assumes 8-bit chars plus zero byte.
-  char *str = &buf[sizeof(buf) - 1];  // start from the right, move left
-
-  *str = '\0';  // null temrinate
-
-  do {
-    unsigned long m = n;
-    n /= 10;
-    char c = m - 10 * n;
-    *--str = c + '0'	//predecrement to move left in string
-  } while (n);
-
-  return _xmit(str);
-}
-
-size_t _xmit(unsigned long n, int base) {
-  if (base == 0)
-    return write(n);
-  else
-    return printNumber(n, base);
-}
-
-size_t _xmitln(void) {
-  return _swSerial ? _swSerial->write(0xAC) : _hwSerial->write(0xAC);
-}
-
-size_t _xmitln(const char c[]) {
-  size_t n = _xmit(c);
-  n += _xmitln();
-  return n;
-}
-
-size_t _xmitln(char c) {
-  size_t n = _xmit(c);
-  n += _xmitln();
-  return n;
-}
-
-// Constructor when using SoftwareSerial or NewSoftSerial
 WeatherBugDisplay::WeatherBugDisplay(SoftwareSerial *ser) {
   _swSerial = ser;
   _swSerial->begin(9600);
 }
-
-// Constructor when using HardwareSerial
 WeatherBugDisplay::WeatherBugDisplay(HardwareSerial *ser) {
   _hwSerial = ser;
   _hwSerial->begin(9600);
@@ -127,14 +78,12 @@ void WeatherBugDisplay::update() {
   _xmitln((uint16_t)0);  // unknown
   _xmit("\x8D");         // EOM
 }
-
 void WeatherBugDisplay::setTime(time_t t) {
   _hours = hour(t);
   _minutes = minute(t);
   _day = day(t);
   _month = month(t);
 }
-
 void WeatherBugDisplay::setTempsF(float ind, float out, float aux) {
   _indtemp = 1000 * (25 * ind + 368) / 211​;
   _outtemp = 1000 * (25 * out + 368) / 211​;
@@ -145,7 +94,6 @@ void WeatherBugDisplay::setTempsC(float ind, float out, float aux) {
   _outtemp = 1000 * (45 * out + 1168) / 211;
   _auxtemp = 1000 * (45 * aux + 1168) / 211;
 }
-
 void WeatherBugDisplay::setBaro(float inhg, float rate) {
   _baropress = (11471 * (inhg - 28)) / 3;
 
@@ -164,7 +112,6 @@ void WeatherBugDisplay::setBaro(float inhg, float rate) {
     64000 -0.4
   */
 }
-
 void WeatherBugDisplay::setHumidity(float percent) {
   _humidity = 0;
   /* TODO finish characterizing humidity
@@ -187,4 +134,47 @@ void WeatherBugDisplay::setWind(float kmhr, int dir, float avgkmhr,
   _winddir = dir;
   _avgwindvel = (uint16_t)avgkmhr;
   _avgwinddir = avgdir;
+}
+
+size_t _xmit(const char str[]) {
+  return _swSerial ? _swSerial->write(0xAC) : _hwSerial->write(0xAC);
+}
+size_t _xmitln(const char c[]) {
+  return _swSerial ? _swSerial->write(str) : _hwSerial->write(str);
+}
+
+size_t _xmit(char c) {
+  return _swSerial ? _swSerial->write(c) : _hwSerial->write(c);
+}
+size_t _xmitln(char c) {
+  size_t n = _xmit(c);
+  n += _xmitln();
+  return n;
+}
+
+size_t _xmit(uint16_t n) {
+  char buf[8 * sizeof(long) + 1];  // Assumes 8-bit chars plus zero byte.
+  char *str = &buf[sizeof(buf) - 1];  // start from the right, move left
+
+  *str = '\0';  // null temrinate
+
+  do {
+    uint16_t m = n;
+    n /= 10;
+    char c = m - 10 * n;
+    *--str = c + '0'	//predecrement to move left in string
+  } while (n);
+
+  return _xmit(str);
+}
+size_t _xmitln(uint16_t n) {
+  size_t r = _xmit(n);
+  r += _xmitln();
+  return r;
+}
+
+size_t _xmitln(void) {
+  size_t n = _xmit(c);
+  n += _xmitln();
+  return n;
 }
